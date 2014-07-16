@@ -41,6 +41,12 @@ namespace zf {
         z0_rapidity_ = tdir.make<TH1D>(z0_rapidity_name.c_str(), z0_rapidity_name.c_str(), 100, -5., 5.);
         z0_rapidity_->GetXaxis()->SetTitle("Z_{Y}");
         z0_rapidity_->GetYaxis()->SetTitle("Counts");
+        
+        // theOtherY_ for gen-reco efficiencies
+        const std::string theOtherY_name = "theOtherY";
+        theOtherY_ = tdir.make<TH1D>(theOtherY_name.c_str(), theOtherY_name.c_str(), 100, -5., 5.);
+        theOtherY_->GetXaxis()->SetTitle("Z_{Y, other}");
+        theOtherY_->GetYaxis()->SetTitle("Counts");
 
         // z0_pt
         const std::string z0_pt_name = "Z0 p_{T}";
@@ -101,6 +107,18 @@ namespace zf {
         phistar_ = tdir.make<TH1D>(phistar_name.c_str(), phistar_name.c_str(), 4000, 0., 4.);
         phistar_->GetXaxis()->SetTitle("#phi*");
         phistar_->GetYaxis()->SetTitle("Counts");
+        
+        // theOtherPhistar for gen-reco efficiencies
+        const std::string theOtherPhistar_name = "#theOtherPhistar";
+        theOtherPhistar_ = tdir.make<TH1D>(theOtherPhistar_name.c_str(), theOtherPhistar_name.c_str(), 4000, 0., 4.);
+        theOtherPhistar_->GetXaxis()->SetTitle("#theOtherPhistar");
+        theOtherPhistar_->GetYaxis()->SetTitle("Counts");
+        
+        // correctedPhistar for NT
+        const std::string correctedPhistar_name = "#correctedPhi*";
+        correctedPhistar_ = tdir.make<TH1D>(correctedPhistar_name.c_str(), correctedPhistar_name.c_str(), 4000, 0., 4.);
+        correctedPhistar_->GetXaxis()->SetTitle("#correctedPhistar");
+        correctedPhistar_->GetYaxis()->SetTitle("Counts");
 
         // pileup
         const std::string pileup_name = "N_{Vertices}";
@@ -144,9 +162,36 @@ namespace zf {
 		phistar_vs_truth_->GetXaxis()->SetTitle("#phi* Reco MC / Truth");
         phistar_vs_truth_->GetYaxis()->SetTitle("Events");
         
-        //deltaR
+        //deltaR between electrons
         const std::string deltaR_name = "deltaR";
         deltaR_ = tdir.make<TH1D>(deltaR_name.c_str(), deltaR_name.c_str(), 100, 0., 10.);
+        
+        //Gen-Matching plots:
+        
+        //e0 deltaR
+        const std::string deltaR0_name = "deltaR0";
+        deltaR0_ = tdir.make<TH1D>(deltaR0_name.c_str(), deltaR0_name.c_str(), 100, 0., 0.1);
+        //e1 deltaR
+        const std::string deltaR1_name = "deltaR1";
+        deltaR1_ = tdir.make<TH1D>(deltaR1_name.c_str(), deltaR1_name.c_str(), 100, 0., 0.1);
+        //e0 deltaPt
+        const std::string deltaPt0_name = "deltaPt0";
+        deltaPt0_ = tdir.make<TH1D>(deltaPt0_name.c_str(), deltaPt0_name.c_str(), 100, -10., 10.);
+        //e1 deltaPt
+        const std::string deltaPt1_name = "deltaPt1";
+        deltaPt1_ = tdir.make<TH1D>(deltaPt1_name.c_str(), deltaPt1_name.c_str(), 100, -10., 10.);
+        //e0 deltaEta
+        const std::string deltaEta0_name = "deltaEta0";
+        deltaEta0_ = tdir.make<TH1D>(deltaEta0_name.c_str(), deltaEta0_name.c_str(), 100, -0.05, 0.05);
+        //e1 deltaEta
+        const std::string deltaEta1_name = "deltaEta1";
+        deltaEta1_ = tdir.make<TH1D>(deltaEta1_name.c_str(), deltaEta1_name.c_str(), 100, -0.05, 0.05);
+        //e0 deltaPhi
+        const std::string deltaPhi0_name = "deltaPhi0";
+        deltaPhi0_ = tdir.make<TH1D>(deltaPhi0_name.c_str(), deltaPhi0_name.c_str(), 100, -0.05, 0.05);
+        //e1 deltaPhi
+        const std::string deltaPhi1_name = "deltaPhi1";
+        deltaPhi1_ = tdir.make<TH1D>(deltaPhi1_name.c_str(), deltaPhi1_name.c_str(), 100, -0.05, 0.05);
     }
 
     void ZFinderPlotter::Fill(
@@ -171,6 +216,11 @@ namespace zf {
             z0_pt_->Fill(ZF_EVENT.reco_z.pt, EVENT_WEIGHT);
             phistar_->Fill(ZF_EVENT.reco_z.phistar, EVENT_WEIGHT);
             deltaR_->Fill(ZF_EVENT.reco_z.deltaR, EVENT_WEIGHT);
+            if(!ZF_EVENT.is_real_data)//if corresponding gen info exists
+            {
+            	theOtherPhistar_->Fill(ZF_EVENT.reco_z.theOtherPhistar, EVENT_WEIGHT);
+	            theOtherY_->Fill(ZF_EVENT.reco_z.theOtherY, EVENT_WEIGHT);
+            }
 
             // Fill the histograms with the information from the approriate electron
             if (ZF_EVENT.e0 != NULL && ZF_EVENT.e1 != NULL){
@@ -218,12 +268,27 @@ namespace zf {
             pileup_->Fill(ZF_EVENT.reco_vert.num, EVENT_WEIGHT);
             nelectrons_->Fill(ZF_EVENT.n_reco_electrons, EVENT_WEIGHT);
         } else if (USE_MC_ && !ZF_EVENT.is_real_data) {
+        	//std::cout<<"Ping!"<<std::endl;
             z0_mass_all_->Fill(ZF_EVENT.truth_z.m, EVENT_WEIGHT);
             z0_mass_coarse_->Fill(ZF_EVENT.truth_z.m, EVENT_WEIGHT);
             z0_mass_fine_->Fill(ZF_EVENT.truth_z.m, EVENT_WEIGHT);
             z0_rapidity_->Fill(ZF_EVENT.truth_z.y, EVENT_WEIGHT);
             z0_pt_->Fill(ZF_EVENT.truth_z.pt, EVENT_WEIGHT);
             phistar_->Fill(ZF_EVENT.truth_z.phistar, EVENT_WEIGHT);
+            correctedPhistar_->Fill(ZF_EVENT.truth_z.correctedPhistar, EVENT_WEIGHT);
+            theOtherPhistar_->Fill(ZF_EVENT.truth_z.theOtherPhistar, EVENT_WEIGHT);
+            theOtherY_->Fill(ZF_EVENT.truth_z.theOtherY, EVENT_WEIGHT);
+            deltaR_->Fill(ZF_EVENT.reco_z.deltaR, EVENT_WEIGHT);
+            
+            //gen matching info
+            deltaR0_->Fill(ZF_EVENT.genMatch.deltaR0, EVENT_WEIGHT);
+            deltaR1_->Fill(ZF_EVENT.genMatch.deltaR1, EVENT_WEIGHT);
+            deltaPt0_->Fill(ZF_EVENT.genMatch.deltaPt0, EVENT_WEIGHT);
+            deltaPt1_->Fill(ZF_EVENT.genMatch.deltaPt1, EVENT_WEIGHT);
+            deltaEta0_->Fill(ZF_EVENT.genMatch.deltaEta0, EVENT_WEIGHT);
+            deltaEta1_->Fill(ZF_EVENT.genMatch.deltaEta1, EVENT_WEIGHT);    
+            deltaPhi0_->Fill(ZF_EVENT.genMatch.deltaPhi0, EVENT_WEIGHT);
+            deltaPhi1_->Fill(ZF_EVENT.genMatch.deltaPhi1, EVENT_WEIGHT);        
 
             // Fill the histograms with the information from the approriate electron
             if (ZF_EVENT.e0_truth != NULL && ZF_EVENT.e1_truth != NULL){

@@ -71,10 +71,26 @@ namespace zf {
                 double m;
                 double pt;
                 double y;
+                double theOtherY;//for events where gen XOR reco failed given selectoin
                 double phistar;
+                double correctedPhistar;//using truth NT electron phi instead of reco
+                double theOtherPhistar; //for events where gen XOR reco failed given selectoin
                 double eta;
                 double deltaR;
+                
+                int passOtherLevel;
             } reco_z, truth_z;
+            //struct for Gen-matching:
+            struct genMatching{
+            	double deltaPt0;
+            	double deltaPt1;
+            	double deltaEta0;
+            	double deltaEta1;
+            	double deltaPhi0;
+            	double deltaPhi1;
+            	double deltaR0;
+            	double deltaR1;
+            } genMatch;
 
             // Event weight, used for things like pileup reweighting. Most
             // other weights are cut dependent (efficiencies for example) and
@@ -128,6 +144,7 @@ namespace zf {
             // Called by the constructor to handle MC and Data separately
             void InitReco(const edm::Event& iEvent, const edm::EventSetup& iSetup);
             void InitTruth(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+            void InitGenMatch(const edm::Event& iEvent, const edm::EventSetup& iSetup);//NEW
             void InitTrigger(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
             void InitGSFElectrons(const edm::Event& iEvent, const edm::EventSetup& iSetup);

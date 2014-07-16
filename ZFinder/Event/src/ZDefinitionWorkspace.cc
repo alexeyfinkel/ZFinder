@@ -40,6 +40,8 @@ namespace zf {
         z_y_ = new RooRealVar("z_y", "Z_{Y}", -6, 6);
         z_pt_ = new RooRealVar("z_pt", "Z_{p_{T}}", 0, 1000, "GeV");
         phistar_ = new RooRealVar("phistar", "#phi*", -0.1, 10);
+        theOtherPhistar_ = new RooRealVar("theOtherPhistar", "#otherPhi*", -0.1, 10);
+        theOtherY_ = new RooRealVar("theOtherY", "Z_{Y, other}", -6, 6);
         // Electrons
         e0_pt_ = new RooRealVar("e0_pt", "p_{T}^{e_{0}}", 0, 1000, "GeV");
         e0_eta_ = new RooRealVar("e0_eta", "#eta_{e_{0}}", -6, 6);
@@ -81,6 +83,8 @@ namespace zf {
 
         // Argsets
         argset_ = new RooArgSet(*z_mass_, *phistar_, *z_pt_, *z_eta_, *z_y_);
+        argset_->add(*theOtherPhistar_);
+        argset_->add(*theOtherY_);
         argset_->add(*e0_pt_);
         argset_->add(*e0_eta_);
         argset_->add(*e0_phi_);
@@ -221,6 +225,8 @@ namespace zf {
         argset_->setRealValue("z_y", z_data->y);
         argset_->setRealValue("z_pt", z_data->pt);
         argset_->setRealValue("phistar", z_data->phistar);
+        argset_->setRealValue("theOtherPhistar", z_data->theOtherPhistar);
+        argset_->setRealValue("theOtherY", z_data->theOtherY);
         argset_->setRealValue("e0_pt", e_tag->pt);
         argset_->setRealValue("e0_eta", e_tag->eta);
         argset_->setRealValue("e0_phi", e_tag->phi);
@@ -263,6 +269,8 @@ namespace zf {
         delete z_y_;
         delete z_pt_;
         delete phistar_;
+        delete theOtherPhistar_;
+        delete theOtherY_;
         delete e0_pt_;
         delete e0_eta_;
         delete e0_phi_;

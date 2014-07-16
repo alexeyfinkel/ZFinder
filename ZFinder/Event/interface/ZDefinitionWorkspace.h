@@ -54,6 +54,8 @@ namespace zf {
             RooRealVar* z_y_;
             RooRealVar* z_pt_;
             RooRealVar* phistar_;
+            RooRealVar* theOtherPhistar_;
+            RooRealVar* theOtherY_;
             // Electrons
             RooRealVar* e0_pt_;
             RooRealVar* e0_eta_;

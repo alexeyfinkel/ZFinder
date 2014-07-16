@@ -94,6 +94,15 @@ namespace zf {
         InitReco(iEvent, iSetup);  // Data
         if (!is_real_data) {
             InitTruth(iEvent, iSetup);  // MC
+            if((reco_z.m != -1)&&(truth_z.m != -1)) //if both truth and reco Zs successfully created
+            {
+            	InitGenMatch(iEvent, iSetup);	//gen-matching
+	            truth_z.correctedPhistar = ReturnPhistar(e0->eta, e0->phi, e1->eta, e1_truth->phi);
+	            reco_z.theOtherPhistar = truth_z.phistar;
+	            reco_z.theOtherY = truth_z.y;
+	            truth_z.theOtherPhistar = reco_z.phistar;
+            	truth_z.theOtherY = reco_z.y;	            	
+            }
         }
         InitTrigger(iEvent, iSetup);  // Trigger Matching
     }
@@ -449,15 +458,33 @@ namespace zf {
         // Z Data
         reco_z.m = -1;
         reco_z.y = -1000;
+        reco_z.theOtherY = -1000;
         reco_z.pt = -1;
         reco_z.phistar = -1;
+        reco_z.correctedPhistar = -1;
+        reco_z.theOtherPhistar = -1;
         reco_z.eta = -1000;
+        reco_z.deltaR = -1;
+        reco_z.passOtherLevel = false;
         truth_z.m = -1;
         truth_z.y = -1000;
+        truth_z.theOtherY = -1000;
         truth_z.pt = -1;
         truth_z.phistar = -1;
+        truth_z.correctedPhistar = -1;
+        truth_z.theOtherPhistar = -1;
         truth_z.eta = -1000;
-        reco_z.deltaR = -1;
+        truth_z.passOtherLevel = false;
+        
+        //gen-matching
+        genMatch.deltaR0 = -1;
+        genMatch.deltaR1 = -1;
+        genMatch.deltaPt0 = -1000;
+        genMatch.deltaPt1 = -1000;  
+        genMatch.deltaEta0 = -1000;
+        genMatch.deltaEta1 = -1000; 
+        genMatch.deltaPhi0 = -1000;
+        genMatch.deltaPhi1 = -1000;     
 
         // Electrons
         e0 = NULL;
@@ -549,6 +576,61 @@ namespace zf {
             truth_z.phistar = ReturnPhistar(electron_0->eta(), electron_0->phi(), electron_1->eta(), electron_1->phi());
             truth_z.eta = z_boson->eta();
         }
+    }
+    
+    void ZFinderEvent::InitGenMatch(const edm::Event& iEvent, const edm::EventSetup& iSetup)//NEW
+    {
+    	//NOTE:first index is TRUTH, second is RECO!
+    	double deltaR00 = sqrt( pow(e0_truth->eta - e0->eta,2) + pow(e0_truth->phi - e0->phi,2) );
+    	double deltaR01 = sqrt( pow(e0_truth->eta - e1->eta,2) + pow(e0_truth->phi - e1->phi,2) );
+    	double deltaR10 = sqrt( pow(e1_truth->eta - e0->eta,2) + pow(e1_truth->phi - e0->phi,2) );
+    	double deltaR11 = sqrt( pow(e1_truth->eta - e1->eta,2) + pow(e1_truth->phi - e1->phi,2) );
+    	//check for events where e0 and e1 switch between gen and reco:
+    	if((deltaR00<=deltaR01) && (deltaR11<=deltaR10))//normal case--no switch
+    	{
+    		genMatch.deltaPt0 = e0_truth->pt - e0->pt;
+    		genMatch.deltaPt1 = e1_truth->pt - e1->pt;
+    		genMatch.deltaEta0 = e0_truth->eta - e0->eta;
+    		genMatch.deltaEta1 = e1_truth->eta - e1->eta;
+    		//electrons and positrons deflect in opposite directions in phi, 
+    		//and we want to get a sense of the magnitude
+    		//need to be careful for when one of the electrons is trackless:
+    		//***Going to make deltaPhi1 always correspond to forward electron***//
+    		//***Also going to apply analytic bending correction directly to phi1!***//
+    		if(fabs(e0->eta) > 2.5)//e0 trackless
+    		{
+    			if(e0->charge==0)
+    			{
+    				//3.18 m to EE, 3.8 T field, and a factor of 1e9 for GeV
+    				e0->phi += -1*e1->charge*tanh(e0->eta)/cosh(e0->eta)*3.18*3.8/(e0->pt*1e9);
+    			}
+    			genMatch.deltaPhi1 = e0_truth->charge*(e0_truth->phi - e0->phi);
+    			genMatch.deltaPhi0 = e1_truth->phi - e1->phi;
+    		}
+    		else if(fabs(e1->eta) > 2.5)//e1 trackless
+    		{
+    			if(e1->charge==0)
+    			{
+    				//3.18 m to EE, 3.8 T field
+    				e1->phi += -1*e0->charge*tanh(e1->eta)/cosh(e1->eta)*3.18*1.6e-19*3.8/e1->pt;
+    			}
+    			genMatch.deltaPhi0 = e0_truth->phi - e0->phi;
+    			genMatch.deltaPhi1 = e1_truth->charge*(e1_truth->phi - e1->phi);
+    		}
+    		genMatch.deltaR0 = deltaR00;
+    		genMatch.deltaR1 = deltaR11;
+    	}
+    	else //case of switching: gen e0 is closer to reco e1 & vice-versa (presumably because of momentum smearing)
+    	{
+    		genMatch.deltaPt0 = e0_truth->pt - e1->pt;
+    		genMatch.deltaPt1 = e1_truth->pt - e0->pt;
+    		genMatch.deltaEta0 = e0_truth->eta - e1->eta;
+    		genMatch.deltaEta1 = e1_truth->eta - e0->eta;
+    		genMatch.deltaPhi0 = e0_truth->phi - e1->phi;
+    		genMatch.deltaPhi0 = e1_truth->phi - e0->phi;
+    		genMatch.deltaR0 = deltaR00;
+    		genMatch.deltaR1 = deltaR11;
+    	}
     }
 
     void ZFinderEvent::InitTrigger(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
