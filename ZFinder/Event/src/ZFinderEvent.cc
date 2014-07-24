@@ -97,7 +97,8 @@ namespace zf {
             if((reco_z.m != -1)&&(truth_z.m != -1)) //if both truth and reco Zs successfully created
             {
             	InitGenMatch(iEvent, iSetup);	//gen-matching
-	            truth_z.correctedPhistar = ReturnPhistar(e0->eta, e0->phi, e1->eta, e1_truth->phi);
+            	//***NOTE and WARNING: NT phi1 has been corrected for bending during InitGenMatch()!***//
+	            truth_z.correctedPhistar = ReturnPhistar(e0->eta, e0->phi, e1->eta, e1->phi);
 	            reco_z.theOtherPhistar = truth_z.phistar;
 	            reco_z.theOtherY = truth_z.y;
 	            truth_z.theOtherPhistar = reco_z.phistar;
@@ -601,8 +602,8 @@ namespace zf {
     		{
     			if(e0->charge==0)
     			{
-    				//3.18 m to EE, 3.8 T field, and a factor of 1e9 for GeV
-    				e0->phi += -1*e1->charge*tanh(e0->eta)/cosh(e0->eta)*3.18*3.8/(e0->pt*1e9);
+    				//3.18 m to EE, 3.8 T field, and a factor of 10/3 is GeV/c
+    				e0->phi += -1*e1->charge/sinh(fabs(e0->eta))*3.18*3.8/(e0->pt*10/3)/2;
     			}
     			genMatch.deltaPhi1 = e0_truth->charge*(e0_truth->phi - e0->phi);
     			genMatch.deltaPhi0 = e1_truth->phi - e1->phi;
@@ -611,8 +612,7 @@ namespace zf {
     		{
     			if(e1->charge==0)
     			{
-    				//3.18 m to EE, 3.8 T field
-    				e1->phi += -1*e0->charge*tanh(e1->eta)/cosh(e1->eta)*3.18*1.6e-19*3.8/e1->pt;
+    				e1->phi += -1*e0->charge/sinh(fabs(e1->eta))*3.18*3.8/(e1->pt*10/3)/2;
     			}
     			genMatch.deltaPhi0 = e0_truth->phi - e0->phi;
     			genMatch.deltaPhi1 = e1_truth->charge*(e1_truth->phi - e1->phi);

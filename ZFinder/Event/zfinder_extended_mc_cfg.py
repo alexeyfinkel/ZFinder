@@ -18,12 +18,12 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input file
 process.source = cms.Source("PoolSource",
-        fileNames = cms.untracked.vstring('file:/local/cms/phedex/store/mc/Summer12_DR53X/DYToEE_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S10_START53_V7A-v1/0000/AC6646E7-36F0-E111-B2F8-00259073E3FC.root')
+        fileNames = cms.untracked.vstring('file:/hdfs/cms/phedex/store/mc/Summer12_DR53X/DYToEE_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S10_START53_V7A-v1/0000/AC6646E7-36F0-E111-B2F8-00259073E3FC.root')
         )
 
 # Output file
 process.TFileService = cms.Service("TFileService",
-        fileName = cms.string("test_extended_mc.root")
+        fileName = cms.string("test_extended_mc_006.root")
         )
 
 # Import rho value for isolation correction
