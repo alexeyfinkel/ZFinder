@@ -904,7 +904,7 @@ namespace zf {
                 const int Q_NT = -1 * spectator_electron->charge;//inferred NT electron charge
                 const double NUMERIC_FACTOR = DIST_TO_EE * B_FIELD * 3 / 20;
                 // 1/(10/3) is from GeV/c, and 1/2 is geometric
-                const int ETA_NT = fabs(electron_to_correct->eta);//sign of eta is unimportant
+                const double ETA_NT = fabs(electron_to_correct->eta);//sign of eta is unimportant
                 const double PT_NT = electron_to_correct->pt;
                 const double ADDITIVE_CORRECTION =  Q_NT * NUMERIC_FACTOR / sinh( ETA_NT ) / PT_NT;
 
