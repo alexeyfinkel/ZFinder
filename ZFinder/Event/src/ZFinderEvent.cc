@@ -897,13 +897,16 @@ namespace zf {
             const double WEIGHT = 1.0;
             // We can do the correction
             if (spectator_electron != NULL) {
-                //3.18 m to EE, 3.8 T field, and a factor of 1e9 for GeV
+                //3.18 m to EE, 3.8 T field, and a factor of 10/3 for GeV/c
                 const double B_FIELD = 3.8;  // Tesla
                 const double DIST_TO_EE = 3.18;  // Distance to EE in meters
 
-                // TODO: Alexey, please break this line up so that it isn't a
-                // million miles long
-                const double ADDITIVE_CORRECTION = 1 * spectator_electron->charge * tanh(electron_to_correct->eta) / cosh(electron_to_correct->eta) * DIST_TO_EE * B_FIELD / (electron_to_correct->pt * 1e9);
+                const int Q_NT = -1 * spectator_electron->charge;//inferred NT electron charge
+                const double NUMERIC_FACTOR = DIST_TO_EE * B_FIELD * 3 / 20;
+                // 1/(10/3) is from GeV/c, and 1/2 is geometric
+                const int ETA_NT = fabs(electron_to_correct->eta);//sign of eta is unimportant
+                const double PT_NT = electron_to_correct->pt;
+                const double ADDITIVE_CORRECTION =  Q_NT * NUMERIC_FACTOR / sinh( ETA_NT ) / PT_NT;
 
                 electron_to_correct->phi += ADDITIVE_CORRECTION;
                 electron_to_correct->AddCutResult("nt_corrected", true, WEIGHT);
