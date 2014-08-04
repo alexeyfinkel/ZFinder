@@ -23,7 +23,7 @@ process.source = cms.Source("PoolSource",
 
 # Output file
 process.TFileService = cms.Service("TFileService",
-        fileName = cms.string("test_extended_data_002.root")
+        fileName = cms.string("test_extended_data_improvedNT_002.root")
         )
 
 # Run only on lumis specified in the lumi file
@@ -45,6 +45,10 @@ process.RandomNumberGeneratorService = RandomNumberGeneratorService
 process.CalibratedElectrons = CalibratedElectrons
 process.eleRegressionEnergy = ElectronEnergyRegressions
 
+#calibrated high-eta photons
+from photonBucket.CalibratedHighEtaPhotons.calibratedhighetaphotons_cfi import calibratedHighEtaPhotons
+process.calibratedHighEtaPhotons = calibratedHighEtaPhotons
+
 # Import rho value for isolation correction
 from ZFinder.Event.kt6_pfjets_cfi import kt6PFJetsForIsolation
 process.kt6PFJetsForIsolation = kt6PFJetsForIsolation.clone()
@@ -60,6 +64,7 @@ process.ZFinder = ZFinder.clone(
         # Use the calibrated electrons we make with
         # process.CalibratedElectrons
         ecalElectronsInputTag = cms.InputTag("CalibratedElectrons", "calibratedGsfElectrons"),
+        ntElectronsInputTag = cms.InputTag("calibratedHighEtaPhotons"),
         )
 
 # RUN
@@ -67,6 +72,7 @@ process.p = cms.Path(
         process.kt6PFJetsForIsolation
         * process.eleRegressionEnergy
         * process.CalibratedElectrons
+        * process.calibratedHighEtaPhotons
         * process.pfiso
         * process.ZFinder
         )
