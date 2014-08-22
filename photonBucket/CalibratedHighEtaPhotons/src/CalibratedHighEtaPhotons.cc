@@ -121,15 +121,7 @@ void
 CalibratedHighEtaPhotons::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
    using namespace edm;
-/* This is an event example
-   //Read 'ExampleData' from the Event
-   Handle<ExampleData> pIn;
-   iEvent.getByLabel("example",pIn);
-   //Use the ExampleData to create an ExampleData2 which 
-   // is put into the Event
-   std::auto_ptr<ExampleData2> pOut(new ExampleData2(*pIn));
-   iEvent.put(pOut);
-*/
+
 	edm::Handle<EcalRecHitCollection> ecalRecHits;
 	iEvent.getByLabel(recHitTag_,ecalRecHits);
 	const EcalRecHitCollection* theEErecHits = ecalRecHits.product() ;
@@ -142,7 +134,6 @@ CalibratedHighEtaPhotons::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 	//loop through photons, for high-eta ones get hits
 	//then compute a correction to the energy, and create a new photon with corrected energy
 	//put it into the new collection and put the collection into the event
-	//***currently unclear how best to read in calibration constants. Should beginJob() be used?***
 	for(reco::PhotonCollection::const_iterator photIt = uncalibratedPhotons->begin(); photIt != uncalibratedPhotons->end(); photIt++)
 	{
 		if( fabs(photIt->p4().Eta())<2.5 )continue;
@@ -159,9 +150,9 @@ CalibratedHighEtaPhotons::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 	        ix = eeId.ix();
 	        iy = eeId.iy();
 	        rawHitSumEnergy += itrechit->energy();
-	        if( (((ix-50.5)*(ix-50.5)+(iy-50.5)*(iy-50.5))  < 132.25) || (((ix-50.5)*(ix-50.5)+(iy-50.5)*(iy-50.5)) > 342.25) )
+	        if( (((ix-50.5)*(ix-50.5)+(iy-50.5)*(iy-50.5))  < 132.25) || (((ix-50.5)*(ix-50.5)+(iy-50.5)*(iy-50.5)) > 342.25) )//i.e. if hit is not in NT
 	        {
-	        	calHitSumEnergy += rawHitSumEnergy;
+	        	calHitSumEnergy += itrechit->energy();
 	        }
 	        else
 	        {
@@ -175,6 +166,9 @@ CalibratedHighEtaPhotons::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 		newE = photIt->p4().E()*calHitSumEnergy/rawHitSumEnergy;
 		newPt = newE/cosh(eta);
 		p4l.SetPtEtaPhiE(newPt, eta, phi, newE);
+		
+		//diagnostic cout:
+		std::cout<<"Raw Hit Sum = "<<rawHitSumEnergy<<", Cal Hit Sum = "<<calHitSumEnergy<<std::endl;
 		
 		newP4 = reco::Particle::LorentzVector(p4l.X(),p4l.Y(),p4l.Z(),p4l.T());
 		//now make a new photon from the old one
