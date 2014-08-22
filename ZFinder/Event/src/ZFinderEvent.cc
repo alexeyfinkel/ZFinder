@@ -76,11 +76,37 @@ namespace zf {
         // making Zs
         use_muon_acceptance_ = iConfig.getParameter<bool>("use_muon_acceptance");
 
+        // Reject events that do not have a generator Z->ee event
+        require_gen_z_ = iConfig.getParameter<bool>("require_gen_z");
+
         // Set up the lumi reweighting, but only if it is MC.
         if (!is_real_data && lumi_weights_ == NULL) {
+            const std::string PILEUP_ERA = iConfig.getParameter<std::string>("pileup_era");
+            // We use a flag in the python file to set the pileup reweighting
+            // to use. If a blank, or an unrecognized, string is passed, then
+            // we use the full ABCD reweighting.
+            std::vector<float> pileup_distribution_in_data = RUN_2012_ABCD_TRUE_PILEUP;
+
+            std::cout << "Pileup reweighting using era: " << PILEUP_ERA << std::endl;
+            if (PILEUP_ERA == "A") {
+                pileup_distribution_in_data = RUN_2012_A_TRUE_PILEUP;
+            }
+            else if (PILEUP_ERA == "B") {
+                pileup_distribution_in_data = RUN_2012_B_TRUE_PILEUP;
+            }
+            else if (PILEUP_ERA == "C") {
+                pileup_distribution_in_data = RUN_2012_C_TRUE_PILEUP;
+            }
+            else if (PILEUP_ERA == "D") {
+                pileup_distribution_in_data = RUN_2012_D_TRUE_PILEUP;
+            }
+            else {
+                std::cout << "Using RUN_2012_ABCD_TRUE_PILEUP" << std::endl;
+            }
+
             lumi_weights_ = new edm::LumiReWeighting(
                     SUMMER12_53X_MC_TRUE_PILEUP,  // MC distribution
-                    RUN_2012_B_TRUE_PILEUP        // Data distribution
+                    pileup_distribution_in_data   // Data distribution
                     );
         }
         // Use the lumi reweighting to set the event weight. It is 1. for data,
@@ -104,6 +130,16 @@ namespace zf {
             if (reco_z.m != -1) {  // Good reco Z
                 truth_z.other_phistar = reco_z.phistar;
                 truth_z.other_y = reco_z.y;
+            }
+            // Gen Z check
+            if (require_gen_z_ and truth_z.m == -1) {
+                // We set the electrons to NULL pointers and the z mass to -1,
+                // which mark the event as bad
+                set_both_e_truth(NULL, NULL);
+                set_both_e(NULL, NULL);
+                truth_z.m = -1;
+                reco_z.m = -1;
+                return;
             }
         }
         InitTrigger(iEvent, iSetup);  // Trigger Matching
@@ -500,9 +536,19 @@ namespace zf {
         /* Count Pile Up */
         edm::Handle<std::vector<PileupSummaryInfo> > pileup_info;
         iEvent.getByLabel(inputtags_.pileup, pileup_info);
+        // Loop over the pileup info and take the number of pileup events from
+        // the 0th bunch crossing
+        std::vector<PileupSummaryInfo>::const_iterator PILEUP_ELEMENT;
         if (pileup_info.isValid()) {
-            truth_vert.num = pileup_info->size();
-        } else {
+            for(PILEUP_ELEMENT = pileup_info->begin(); PILEUP_ELEMENT != pileup_info->end(); ++PILEUP_ELEMENT) {
+                const int BUNCH_CROSSING = PILEUP_ELEMENT->getBunchCrossing();
+                if (BUNCH_CROSSING == 0) {
+                    // The main vertex is counted as well, so add +1
+                    truth_vert.num = PILEUP_ELEMENT->getPU_NumInteractions() + 1;
+                }
+            }
+        }
+        else {
             truth_vert.num = -1;
         }
 

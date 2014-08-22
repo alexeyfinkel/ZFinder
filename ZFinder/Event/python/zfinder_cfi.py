@@ -31,5 +31,10 @@ ZFinder = cms.EDAnalyzer('ZFinder',
         # Use the muon acceptance (pt>30 & |eta| < 2.1 + pt>20 & |eta|<2.4) to
         # select electrons to make into ZFinderElectrons. This means that only
         # these electrons will be considered to make Zs.
-        use_muon_acceptance = cms.bool(False)
+        use_muon_acceptance = cms.bool(False),
+        # Reject MC events that don't have a generator Z->ee event.
+        require_gen_z = cms.bool(False),
+        # Pileup Era to correct MC to. Valid values are A, B, C, D. Anything
+        # else will default to the full 2012.
+        pileup_era = cms.string("ABCD"),  # defaults to ABCD
         )
